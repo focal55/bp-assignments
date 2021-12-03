@@ -20,6 +20,8 @@ if (!isset($_GET["--offer"])) {
     die();
 }
 
+print $_GET["--offer"];
+
 // Fetch the Data.
 print "Fetching Data.../n";
 $headers = [
@@ -45,7 +47,7 @@ $responseData = json_decode($response, TRUE);
 
 // Parse response.
 print "Parsing Data...\n";
-$offerData = buildOfferData("Total 2nd Half", $responseData);
+$offerData = buildOfferData($_GET["--offer"], $responseData);
 
 // Write CSV.
 print "Saving Data...\n";

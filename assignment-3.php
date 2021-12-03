@@ -15,7 +15,7 @@ function fetchExpertRecords(int $minNumPicks = 3) : array {
         die();
     }
 
-	$data = [];
+    $data = [];
     $recordTypes = ["Moneyline", "Spread", "Over-Under"];
     $recordTemplate = ["Category" => "", "Win" => 0, "Loss" => 0, "Push" => 0];
 
@@ -54,7 +54,7 @@ function fetchExpertRecords(int $minNumPicks = 3) : array {
         $data[$row["Expert_id"]]["records"]["Overall"][transformResultName(trim($row["Result"]))] += 1;
     }
 
-	return $data;
+    return $data;
 }
 
 /**

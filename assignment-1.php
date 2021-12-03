@@ -3,94 +3,125 @@
 /**
  * @file
  * Assignment 1 for BP
- *
- * - Writing for PHP 7.4.25
+ * PHP 7.4
  */
 
+// Const.
 const DATA_DIR = "data";
 const DATA_TEAMS = "assn1-teams.json";
 const DATA_RECORDS = "assn1-records.json";
 
-// Read JSON data files
-$teamData = file_get_contents(DATA_DIR . "/" . DATA_TEAMS);
-$recordData = file_get_contents(DATA_DIR . "/" . DATA_RECORDS);
+// Read JSON data files.
+$teamsData = file_get_contents(DATA_DIR . "/" . DATA_TEAMS);
+$recordsData = file_get_contents(DATA_DIR . "/" . DATA_RECORDS);
 
-if (!$teamData || !$recordData) {
+// Bail if we can not find both.
+if (!$teamsData || !$recordsData) {
     print "Well that was unexpected. We can not find the data files.";
 }
 
-// Parse.
-$teams = json_decode($teamData, TRUE);
-$records = json_decode($recordData, TRUE);
+// Parse the data.
+$teamsData = json_decode($teamsData, TRUE);
+$recordsData = json_decode($recordsData, TRUE);
 
+// Build response data.
+// Loop through Records and populate a combined array sorted by overall win percentage.
 $responseData = [];
+foreach ($recordsData['conferences'] as $record) {
+    foreach ($record["divisions"] as $division) {
+        foreach ($division["teams"] as $data) {
+            $teamData = getTeamFromData($data["alias"], $teamsData);
 
-// Loop through Records and populate combined array keyed by season then team
-// See example structure
-foreach ($records as $record) {
-    foreach ($record["conferences"] as $conference) {
-        foreach ($conference["divisions"] as $division) {
-            foreach ($conference["teams"] as $team) {
-                $teamId = getTeamIdFromData($team["alias"], $teamData);
-                $team = new Team($teamId, $team);
-                $team->records = new stdClass();
-                $team->records->overall = new Record($team['records']);
-                $team->records->conference = new Record($team['records']);
-                $team->records->division = new Record($team['records']);
-                $responseData[] = $team;
+            // Skip if we do not have all the necessary data.
+            if (!isset($teamData['team_id']) || !isset($teamData['name']) || !isset($data)) {
+                continue;
             }
+
+            $team = new Team($teamData['team_id'], $teamData['name'], $data);
+            $responseData[] = $team->getObject();
         }
     }
-
-    usort($responseData, ["Team", "compareWinPct"]);
-
-    return $responseData;
 }
 
+// Sort by win percentage.
+usort($responseData, "compareWinPct");
 
-function compareWinPct($a, $b) {
-    if ($a->records->overall->win_pct == $b->records->overall->win_pct) {
-        return 0;
-    }
-    return $a->records->overall->win_pct > $b->records->overall->win_pct ? -1 : 1;
+// Return data in json format.
+header('Content-Type: application/json; charset=utf-8');
+print json_encode($responseData);
 
-}
 
 /**
  * Get Team from supplied data array.
  * @param string $teamAbr
  * @param array $teamData
- * @return string|null
+ * @return array|null
  */
-function getTeamIdFromData(string $teamAbr, array $teamData): array {
-    $teamId = NULL;
+function getTeamFromData(string $teamAbr, array $teamData) {
+    $team = NULL;
     foreach ($teamData as $data) {
-        if (isset($data[$teamAbr])) {
-            $teamId = $data['alias'];
+        if ($data['team_id'] == $teamAbr) {
+            $team = $data;
             break;
         }
     }
-    return $teamId;
+    return $team;
 }
+
+/**
+ * Sort Response Data by Overall Win Percentage.
+ * @param $a
+ * @param $b
+ * @return int
+ */
+function compareWinPct($a, $b) {
+    if ($a->records->overall->win_pct == $b->records->overall->win_pct) {
+        return 0;
+    }
+    return $a->records->overall->win_pct > $b->records->overall->win_pct ? -1 : 1;
+}
+
 
 /**
  * Structs: Team.
  */
 class Team
 {
-    protected $team_id;
-    protected $name;
+    protected $teamData = [];
+    public $team_id;
+    public $name;
+    public $records;
 
-    public function __construct(string $teamId, array $teamData)
+    public function __construct(string $teamId, string $teamName, array $teamData)
     {
-        $this->team_id = $teamData['team_id'];
-        $this->name = $teamData['city'] . " " . $teamData['name'];
+        $this->teamData = $teamData;
+        $this->team_id = $teamId;
+        $this->name = $teamData["market"] . " " . $teamName;
+        $this->records = $this->getRecords();
+    }
+
+    protected function getRecords() {
+        $teamConference = isset($this->teamDatadata['afc']) ? 'afc' : 'nfc';
+
+        $records = new stdClass();
+
+        $overall = new Record('overall', $this->teamData['records']);
+        $records->overall = $overall->getObject();
+
+        $conference = new Record($teamConference, $this->teamData['records']);
+        $records->conference = $conference->getObject();
+
+        $division = new Record('division', $this->teamData['records']);
+        $records->division = $division->getObject();
+
+        return $records;
     }
 
     public function getObject() : stdClass {
         $team = new stdClass();
         $team->team_id = $this->team_id;
         $team->name = $this->name;
+        $team->records = $this->records;
         return $team;
     }
 }
@@ -100,16 +131,15 @@ class Team
  */
 class Record
 {
-    protected $wins;
-    protected $losses;
-    protected $ties;
-    protected $win_pct;
-    protected $points_for;
-    protected $points_against;
+    public $wins;
+    public $losses;
+    public $ties;
+    public $win_pct;
+    public $points_for;
+    public $points_against;
 
     public function __construct($category, $teamRecords)
     {
-
         foreach ($teamRecords as $record) {
             if ($record['category'] == $category) {
                 $this->wins = $record['wins'];
@@ -118,10 +148,9 @@ class Record
                 $this->win_pct = $record['win_pct'];
                 $this->points_for = $record['points_for'];
                 $this->points_against = $record['points_against'];
+                break;
             }
         }
-
-
     }
 
     public function getObject(): stdClass {

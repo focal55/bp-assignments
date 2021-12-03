@@ -27,17 +27,17 @@ $recordsData = json_decode($recordsData, TRUE);
 // Build response data.
 // Loop through Records and populate a combined array sorted by overall win percentage.
 $responseData = [];
-foreach ($recordsData['conferences'] as $record) {
+foreach ($recordsData["conferences"] as $record) {
     foreach ($record["divisions"] as $division) {
         foreach ($division["teams"] as $data) {
             $teamData = getTeamFromData($data["alias"], $teamsData);
 
             // Skip if we do not have all the necessary data.
-            if (!isset($teamData['team_id']) || !isset($teamData['name']) || !isset($data)) {
+            if (!isset($teamData["team_id"]) || !isset($teamData["name"]) || !isset($data)) {
                 continue;
             }
 
-            $team = new Team($teamData['team_id'], $teamData['name'], $data);
+            $team = new Team($teamData["team_id"], $teamData["name"], $data);
             $responseData[] = $team->getObject();
         }
     }
@@ -47,7 +47,7 @@ foreach ($recordsData['conferences'] as $record) {
 usort($responseData, "compareWinPct");
 
 // Return data in json format.
-header('Content-Type: application/json; charset=utf-8');
+header("Content-Type: application/json; charset=utf-8");
 print json_encode($responseData);
 
 
@@ -60,7 +60,7 @@ print json_encode($responseData);
 function getTeamFromData(string $teamAbr, array $teamData) {
     $team = NULL;
     foreach ($teamData as $data) {
-        if ($data['team_id'] == $teamAbr) {
+        if ($data["team_id"] == $teamAbr) {
             $team = $data;
             break;
         }
@@ -101,17 +101,17 @@ class Team
     }
 
     protected function getRecords() {
-        $teamConference = isset($this->teamDatadata['afc']) ? 'afc' : 'nfc';
+        $teamConference = isset($this->teamDatadata["afc"]) ? 'afc' : 'nfc';
 
         $records = new stdClass();
 
-        $overall = new Record('overall', $this->teamData['records']);
+        $overall = new Record('overall', $this->teamData["records"]);
         $records->overall = $overall->getObject();
 
-        $conference = new Record($teamConference, $this->teamData['records']);
+        $conference = new Record($teamConference, $this->teamData["records"]);
         $records->conference = $conference->getObject();
 
-        $division = new Record('division', $this->teamData['records']);
+        $division = new Record('division', $this->teamData["records"]);
         $records->division = $division->getObject();
 
         return $records;
@@ -141,13 +141,13 @@ class Record
     public function __construct($category, $teamRecords)
     {
         foreach ($teamRecords as $record) {
-            if ($record['category'] == $category) {
-                $this->wins = $record['wins'];
-                $this->losses = $record['losses'];
-                $this->ties = $record['ties'];
-                $this->win_pct = $record['win_pct'];
-                $this->points_for = $record['points_for'];
-                $this->points_against = $record['points_against'];
+            if ($record["category"] == $category) {
+                $this->wins = $record["wins"];
+                $this->losses = $record["losses"];
+                $this->ties = $record["ties"];
+                $this->win_pct = $record["win_pct"];
+                $this->points_for = $record["points_for"];
+                $this->points_against = $record["points_against"];
                 break;
             }
         }

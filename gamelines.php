@@ -20,8 +20,6 @@ if (!isset($_GET["--offer"])) {
     die();
 }
 
-print $_GET["--offer"];
-
 // Fetch the Data.
 print "Fetching Data.../n";
 $headers = [

@@ -45,7 +45,7 @@ $responseData = json_decode($response, TRUE);
 
 // Parse response.
 print "Parsing Data...\n";
-$offerData = fetchOfferData("Total 2nd Half", $responseData);
+$offerData = buildOfferData("Total 2nd Half", $responseData);
 
 // Write CSV.
 print "Saving Data...\n";
@@ -66,7 +66,7 @@ print "Complete! Grab it at " . __DIR__ . "/" . CSV_FILE_PATH . "\n";
  * @param $data
  * @return array
  */
-function fetchOfferData($offerLabel, $data) {
+function buildOfferData($offerLabel, $data) {
     $matchingEvents[] = ["Id", "Name", "Label", "Line", "Odds American"];
     foreach ($data["events"] as $event) {
         foreach ($event["offers"] as $offer) {
